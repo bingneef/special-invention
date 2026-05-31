@@ -15,10 +15,7 @@ class S3Service:
     async def generate_presigned_url(self, bucket_name: str, artifact_name: str, expires_in: int = 3600) -> str:
         # In a real implementation, this would generate a presigned URL for S3.
         # For this mock, we'll just return a URI that our service can understand.
-        if artifact_name == "s3://my-bucket/documents/doc-1/original.json":
-            return "https://www.rekenkamer.nl/site/binaries/site-content/collections/documents/2026/02/04/focus-op-quantum-bij-de-rijksoverheid/rapport-focus-op-quantum-bij-de-rijksoverheid.pdf"
-
-        return "https://www.rekenkamer.nl/site/binaries/site-content/collections/documents/2024/11/07/de-kracht-en-kwetsbaarheid-van-het-digitale-krijgsmachtnetwerk-nafin/PAC+Rapport+De+kracht+en+kwetsbaarheid+van+het+digitale+krijgsmachtnetwerk+NAFIN.pdf"
+        return "https://www.ciz.nl/test-download"
 
     async def store_artifact(self, bucket_name: str, artifact_name: str, artifact_data: BaseModel) -> str:
         path = self._path_for(bucket_name, artifact_name)

@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from temporalio.client import Client
 from temporalio.contrib.pydantic import pydantic_data_converter
@@ -16,6 +17,8 @@ from src.workflows.ingest_document import (
     IngestDocumentWorkflow,
 )
 
+logging.getLogger("transformers").setLevel(logging.ERROR)
+
 
 async def main():
     client = await Client.connect(
@@ -29,7 +32,7 @@ async def main():
         workflows=[IngestDocumentWorkflow],
         workflow_runner=SandboxedWorkflowRunner(
             restrictions=SandboxRestrictions.default.with_passthrough_modules(
-                "pydantic_core", "pydantic_core._pydantic_core", "pydantic_core.core_schema", "numpy"
+                "pydantic_core", "pydantic_core._pydantic_core", "pydantic_core.core_schema", "numpy", "beartype"
             )
         ),
         max_concurrent_activities=0,

@@ -10,7 +10,7 @@ default_elastic_api_service = ElasticApiService()
 
 
 class DocumentPayload(BaseModel):
-    # title: str # FIXME: how are gonna generate this?
+    title: str
     content: str
     summary: str
     keywords: list[str]
@@ -53,7 +53,7 @@ class SendToElastic:
                 )
                 for chunk_data in chunk_datas
             ],
-            title="document_data.title",
+            title=document_data.title,
             content=document_data.content,
             summary=document_data.summary,
             keywords=document_data.keywords,

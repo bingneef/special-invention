@@ -9,6 +9,9 @@ dependencies = [
     "numpy>=2.4.6",
     "pandas>=3.0.3",
     "pydantic>=2.13.4",
+    "pydantic-ai>=1.103.0",
+    "pydantic-ai-slim[openai]>=1.103.0",
+    "python-dotenv>=1.2.2",
     "temporalio>=1.27.2",
 ]
 

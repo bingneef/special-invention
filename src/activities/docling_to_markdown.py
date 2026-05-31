@@ -32,7 +32,7 @@ class DoclingToMarkdown:
 
         artifact_uri = await self.s3_service.store_artifact(
             bucket_name="my-bucket",
-            artifact_name=f"{payload.document_id}/docling_to_markdown/{artifact_data.artifact_name}.json",
+            artifact_name=f"{payload.document_id}/docling_to_markdown/{artifact_data.artifact_name}",
             artifact_data=artifact_data,
         )
 

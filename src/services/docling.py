@@ -80,6 +80,17 @@ class DoclingService:
             for i, chunk in enumerate(raw_chunks)
         ]
 
+        # How to do this??
+        if len(chunks) == 0:
+            print("[DoclingToChunks] No chunks created for document, creating a single chunk with the entire content")
+            chunks = [
+                DoclingChunk(
+                    chunk_id=0,
+                    content=docling_document.export_to_markdown(),
+                    page=1,
+                )
+            ]
+
         return chunks
 
     def _get_page_from_chunk(self, chunk: BaseChunk) -> int | None:

@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 
 from pydantic import BaseModel
 from temporalio import activity
@@ -10,6 +11,8 @@ from src.workflows.contracts import ActivityDocumentOutput, ActivityDocumentPayl
 
 
 class DocumentMetaResponse(BaseModel):
+    title: str
+    publication_date: datetime
     summary: str
     keywords: list[str]
 
@@ -23,6 +26,8 @@ class GenerateDocumentMetaPayload(AppendArtifact):
 
 
 class GenerateDocumentMetaOutput(AppendArtifact):
+    title: str
+    publication_date: datetime | None
     summary: str
     keywords: list[str]
 
@@ -34,7 +39,7 @@ class GenerateDocumentMeta:
 
     @activity.defn
     async def generate_document_meta(self, payload: ActivityDocumentPayload) -> ActivityDocumentOutput:
-        print(f"[EmbedText] processing {payload.document_id}")
+        print(f"[GenerateDocumentMeta] processing {payload.document_id}")
 
         # Fetch data
         data = await self.s3_service.fetch_artifact(payload.artifact_uri, model=GenerateDocumentMetaPayload)
@@ -42,19 +47,22 @@ class GenerateDocumentMeta:
         # Process data
         await asyncio.sleep(1)  # Mock
         output = await AIService().generate_chat_response(
-            "Write a summary...",
+            instructions="Write a concise summary and extract the required data from the following document content.",
+            prompt=data.content,
             response_model=DocumentMetaResponse,
         )
 
         artifact_data = GenerateDocumentMetaOutput(
             **data.model_dump(),
+            title=output.title,
+            publication_date=output.publication_date,
             summary=output.summary,
             keywords=output.keywords,
         )
         # Store the data
         artifact_uri = await self.s3_service.store_artifact(
             bucket_name="my-bucket",
-            artifact_name=f"{payload.document_id}/generate_document_meta/{artifact_data.artifact_name}.json",
+            artifact_name=f"{payload.document_id}/generate_document_meta/{artifact_data.artifact_name}",
             artifact_data=artifact_data,
         )
 

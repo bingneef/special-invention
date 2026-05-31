@@ -54,7 +54,7 @@ class DoclingToChunks:
         artifact_uris = [
             await self.s3_service.store_artifact(
                 bucket_name="my-bucket",
-                artifact_name=f"{payload.document_id}/docling_to_chunks/{artifact_data.artifact_name}.json",
+                artifact_name=f"{payload.document_id}/docling_to_chunks/{artifact_data.artifact_name}",
                 artifact_data=artifact_data,
             )
             for artifact_data in artifact_datas

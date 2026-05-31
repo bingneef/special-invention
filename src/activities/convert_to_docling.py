@@ -27,11 +27,16 @@ class ConvertToDocling:
     ) -> ActivityDocumentOutput:
         print(f"[ConvertToDocling] processing {payload.document_id}")
 
-        # Process data
-        presigned_url = await self.s3_service.generate_presigned_url(
-            bucket_name="my-bucket", artifact_name=payload.artifact_uri
-        )
-        docling_content = await self.docling_service.convert_document(presigned_url)
+        # Note: it should come from S3, but since we mock it this is here for now.. (so we can start with an actual pdf)
+        if payload.artifact_uri.startswith("s3://"):
+            # Process data
+            url = await self.s3_service.generate_presigned_url(
+                bucket_name="my-bucket", artifact_name=payload.artifact_uri
+            )
+        else:
+            url = payload.artifact_uri
+
+        docling_content = await self.docling_service.convert_document(url)
 
         artifact_data = ConvertToDoclingOutput(
             document_id=payload.document_id, artifact_name="document.json", docling_document=docling_content

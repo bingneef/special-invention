@@ -19,6 +19,37 @@ from src.workflows.contracts import (
 
 @workflow.defn
 class IngestDocumentWorkflow:
+    @workflow.run
+    async def run(self, payload: ActivityDocumentPayload) -> ActivityDocumentOutput:
+        document_id = payload.document_id
+
+        result = await workflow.execute_activity(
+            ConvertToDocling().convert_to_docling,
+            ActivityDocumentPayload(document_id=document_id, artifact_uri=payload.artifact_uri),
+            task_queue=DOCUMENT_CONVERSION_TASK_QUEUE,
+            start_to_close_timeout=timedelta(minutes=5),
+        )
+
+        document_branch = asyncio.create_task(
+            self._process_document_branch(document_id=document_id, docling_json_artifact_uri=result.artifact_uri)
+        )
+        chunk_branch = asyncio.create_task(
+            self._process_chunk_branch(document_id=document_id, docling_json_artifact_uri=result.artifact_uri)
+        )
+
+        document_result, chunk_result = await asyncio.gather(document_branch, chunk_branch)
+
+        result = await workflow.execute_activity(
+            SendToElastic().send_to_elastic,
+            ActivityDocumentsPayload(
+                document_id=document_id, artifact_uris=[document_result.artifact_uri, *chunk_result.artifact_uris]
+            ),
+            task_queue=ELASTIC_TASK_QUEUE,
+            start_to_close_timeout=timedelta(minutes=5),
+        )
+
+        return result
+
     async def _process_document_branch(self, document_id: str, docling_json_artifact_uri: str):
         result = await workflow.execute_activity(
             DoclingToMarkdown().docling_to_markdown,
@@ -55,39 +86,6 @@ class IngestDocumentWorkflow:
             EmbedTexts().embed_texts,
             EmbedTextPayload(document_id=document_id, artifact_uris=result.artifact_uris, field="content"),
             task_queue=AI_TASK_QUEUE,
-            start_to_close_timeout=timedelta(minutes=5),
-        )
-
-        return result
-
-    @workflow.run
-    async def run(self, payload: ActivityDocumentPayload) -> ActivityDocumentOutput:
-        document_id = payload.document_id
-
-        result = ActivityDocumentOutput(document_id=document_id, artifact_uri=payload.artifact_uri)
-
-        result = await workflow.execute_activity(
-            ConvertToDocling().convert_to_docling,
-            ActivityDocumentPayload(document_id=document_id, artifact_uri=payload.artifact_uri),
-            task_queue=DOCUMENT_CONVERSION_TASK_QUEUE,
-            start_to_close_timeout=timedelta(minutes=5),
-        )
-
-        document_branch = asyncio.create_task(
-            self._process_document_branch(document_id=document_id, docling_json_artifact_uri=result.artifact_uri)
-        )
-        chunk_branch = asyncio.create_task(
-            self._process_chunk_branch(document_id=document_id, docling_json_artifact_uri=result.artifact_uri)
-        )
-
-        document_result, chunk_result = await asyncio.gather(document_branch, chunk_branch)
-
-        result = await workflow.execute_activity(
-            SendToElastic().send_to_elastic,
-            ActivityDocumentsPayload(
-                document_id=document_id, artifact_uris=[document_result.artifact_uri, *chunk_result.artifact_uris]
-            ),
-            task_queue=ELASTIC_TASK_QUEUE,
             start_to_close_timeout=timedelta(minutes=5),
         )
 
